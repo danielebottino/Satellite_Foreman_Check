@@ -1,7 +1,7 @@
-Satellite / Foreman Registration Detection
+Foreman Registration Detection
 =========
 
-Playbook For Determining if your VMs are registered to Foreman or Satellite
+Playbook For Determining if your VMs are registered to Foreman or Unregistered
 
 Requirements
 ------------

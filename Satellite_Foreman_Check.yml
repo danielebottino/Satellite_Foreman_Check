@@ -1,33 +1,22 @@
 - name: Satellite / Foreman Detection
+  vars:                                                                               # Change this if the foreman hostname changes
+    hostname_foreman: 'pforemanws01v.rete.poste'
   hosts: testing                                                                      # Change this host wave as you need
   tasks:
 
-    - name: Gathering Foreman Subscription Info                                       # Taking info of the foreman conf directory
-      ansible.builtin.stat:
-        path: /etc/foreman
-      register: foreman_check
-
-    - name: Gathering Satellite Subscription Info                                     # Checking the Existance of Sub-Mngr
-      ansible.builtin.stat:
-        path: /usr/sbin/subscription-manager
-      register: satellite_check
-
-    - name: Checking the Satellite Registration                                       # Checking the registration if Sub-Mngr Exists
-      ansible.builtin.command: subscription-manager status
-      register: subscription_status
-      failed_when: false
+    - name: Gathering RHSM Hostname                                                   # Cat the rhsm conf file, retrieving hostname
+      ansible.builtin.command: cat /etc/rhsm/rhsm.conf
+      register: rhsm_hostname
       changed_when: false
-      when: satellite_check.stat.exists
+      failed_when: false
 
     - name: Determining the registration type                                         # "If" statements to determine the registration type
       ansible.builtin.set_fact:
         registration_type: >-                                                         # Readability for the jinja2 script
-          {% if foreman_check.stat.exists %}
-          foreman
-          {% elif satellite_check.stat.exists and 'Overall Status: Registered' in subscription_status.stdout %}
-          satellite
+          {% if "hostname= {{ hostname_foreman }}" in rhsm_hostname.stdout %}
+          REGISTERED
           {% else %}
-          unregistered
+          NOT_REGISTERED
           {% endif %}
 
     - name: Giving Output Information                                                 # Creating the Output debug for easy info access
