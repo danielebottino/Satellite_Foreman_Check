@@ -1,6 +1,6 @@
 - name: Satellite / Foreman Detection
   vars:                                                                               # Change this if the foreman hostname changes
-    hostname_foreman: 'pforemanws01v.rete.poste'
+    hostname_foreman: "hostname= pforemanws01v.rete.poste"
   hosts: testing                                                                      # Change this host wave as you need
   tasks:
 
@@ -13,9 +13,9 @@
     - name: Determining the registration type                                         # "If" statements to determine the registration type
       ansible.builtin.set_fact:
         registration_type: >-                                                         # Readability for the jinja2 script
-          {% if "hostname= {{ hostname_foreman }}" in rhsm_hostname.stdout %}
+          {% if "{{ hostname_foreman }}" in rhsm_hostname.stdout %}
           REGISTERED
-          {% else %}
+          {% elif not "{{ hostname_foreman }}" in rhsm_hostname.stdout %}
           NOT_REGISTERED
           {% endif %}
 
