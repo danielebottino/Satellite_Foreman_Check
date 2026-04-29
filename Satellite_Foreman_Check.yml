@@ -1,11 +1,11 @@
 - name: Satellite / Foreman Detection
   vars:                                                                               # Change this if the foreman hostname changes
-    hostname_foreman: "hostname= pforemanws01v.rete.poste"
+    hostname_foreman: "hostname = pforemanws01v.rete.poste"
   hosts: testing                                                                      # Change this host wave as you need
   tasks:
 
     - name: Gathering RHSM Hostname                                                   # Cat the rhsm conf file, retrieving hostname
-      ansible.builtin.command: cat /etc/rhsm/rhsm.conf
+      ansible.builtin.shell: cat /etc/rhsm/rhsm.conf | grep -w 'hostname ='
       register: rhsm_hostname
       changed_when: false
       failed_when: false
@@ -13,9 +13,9 @@
     - name: Determining the registration type                                         # "If" statements to determine the registration type
       ansible.builtin.set_fact:
         registration_type: >-                                                         # Readability for the jinja2 script
-          {% if "{{ hostname_foreman }}" in rhsm_hostname.stdout %}
+          {% if hostname_foreman == rhsm_hostname.stdout %}
           REGISTERED
-          {% elif not "{{ hostname_foreman }}" in rhsm_hostname.stdout %}
+          {% elif not hostname_foreman == rhsm_hostname.stdout %}
           NOT_REGISTERED
           {% endif %}
 
