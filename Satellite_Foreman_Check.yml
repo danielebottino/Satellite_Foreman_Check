@@ -1,0 +1,37 @@
+- name: Satellite / Foreman Detection
+  hosts: testing                                                                      # Change this host wave as you need
+  tasks:
+
+    - name: Gathering Foreman Subscription Info                                       # Taking info of the foreman conf directory
+      ansible.builtin.stat:
+        path: /etc/foreman
+      register: foreman_check
+
+    - name: Gathering Satellite Subscription Info                                     # Checking the Existance of Sub-Mngr
+      ansible.builtin.stat:
+        path: /usr/sbin/subscription-manager
+      register: satellite_check
+
+    - name: Checking the Satellite Registration                                       # Checking the registration if Sub-Mngr Exists
+      ansible.builtin.command: subscription-manager status
+      register: subscription_status
+      failed_when: false
+      changed_when: false
+      when: satellite_check.stat.exists
+
+    - name: Determining the registration type                                         # "If" statements to determine the registration type
+      ansible.builtin.set_fact:
+        registration_type: >-                                                         # Readability for the jinja2 script
+          {% if foreman_check.stat.exists %}
+          foreman
+          {% elif satellite_check.stat.exists and 'Overall Status: Registered' in subscription_status.stdout %}
+          satellite
+          {% else %}
+          unregistered
+          {% endif %}
+
+    - name: Giving Output Information                                                 # Creating the Output debug for easy info access
+      ansible.builtin.debug:
+        msg:
+          hostname: "{{ ansible_facts['fqdn'] }}"
+          register: "{{ registration_type }}"
