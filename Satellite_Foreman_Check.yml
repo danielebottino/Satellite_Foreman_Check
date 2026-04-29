@@ -5,7 +5,7 @@
   tasks:
 
     - name: Gathering RHSM Hostname                                                   # Cat the rhsm conf file, retrieving hostname
-      ansible.builtin.shell: cat /etc/rhsm/rhsm.conf | grep -w 'hostname ='
+      ansible.builtin.shell: set -o pipefail && cat /etc/rhsm/rhsm.conf | grep -w 'hostname ='
       register: rhsm_hostname
       changed_when: false
       failed_when: false
