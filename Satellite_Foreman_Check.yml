@@ -25,6 +25,10 @@
           hostname: "{{ ansible_facts['fqdn'] }}"
           register: "{{ registration_type }}"
 
+    - name: Registration Collection
+      ansible.builtin.set_fact:
+        registration_collection: "{{ registration_type }}"
+
 - name: Play for Counting
   hosts: all
   run_once: true
@@ -35,7 +39,7 @@
       ansible.builtin.set_fact:
         foreman_count: >-
           {{ groups['all']
-          | map('extract', hostvars, 'registration_type')
+          | map('extract', hostvars, 'registration_collection')
           | select('equalto', ' FOREMAN ')
           | list
           | length }}
@@ -44,7 +48,7 @@
       ansible.builtin.set_fact:
         satellite_count: >-
           {{ groups['all']
-          | map('extract', hostvars, 'registration_type')
+          | map('extract', hostvars, 'registration_collection')
           | select('equalto', ' SATELLITE ')
           | list
           | length }}
