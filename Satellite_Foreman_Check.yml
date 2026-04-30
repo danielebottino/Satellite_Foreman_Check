@@ -1,26 +1,56 @@
 - name: Satellite / Foreman Detection
-  vars:                                                                               # Change this if the foreman hostname changes
+  vars:
     hostname_foreman: "hostname = pforemanws01v.rete.poste"
-  hosts: testing                                                                      # Change this host wave as you need
+  hosts: testing
   tasks:
 
-    - name: Gathering RHSM Hostname                                                   # Cat the rhsm conf file, retrieving hostname
+    - name: Gathering RHSM Hostname
       ansible.builtin.shell: set -o pipefail && cat /etc/rhsm/rhsm.conf | grep -w 'hostname ='
       register: rhsm_hostname
       changed_when: false
       failed_when: false
 
-    - name: Determining the registration type                                         # "If" statements to determine the registration type
+    - name: Determining the registration type
       ansible.builtin.set_fact:
-        registration_type: >-                                                         # Readability for the jinja2 script
+        registration_type: >-
           {% if hostname_foreman == rhsm_hostname.stdout %}
-          REGISTERED
+          FOREMAN
           {% elif not hostname_foreman == rhsm_hostname.stdout %}
-          NOT_REGISTERED
+          SATELLITE
           {% endif %}
 
-    - name: Giving Output Information                                                 # Creating the Output debug for easy info access
+    - name: Giving Output Information
       ansible.builtin.debug:
         msg:
           hostname: "{{ ansible_facts['fqdn'] }}"
           register: "{{ registration_type }}"
+
+- name: Play for Counting
+  hosts: all
+  run_once: true
+  gather_facts: false
+  tasks:
+
+    - name: Counting Foreman
+      ansible.builtin.set_fact:
+        foreman_count: >-
+          {{ groups['all']
+          | map('extract', hostvars, 'registration_type')
+          | select('equalto', ' FOREMAN ')
+          | list
+          | length }}
+
+    - name: Counting Satellite
+      ansible.builtin.set_fact:
+        satellite_count: >-
+          {{ groups['all']
+          | map('extract', hostvars, 'registration_type')
+          | select('equalto', ' SATELLITE ')
+          | list
+          | length }}
+
+    - name: Debugging summary
+      ansible.builtin.debug:
+        msg:
+          Foreman Machines: "{{ foreman_count }}"
+          Satellite Machines: "{{ satellite_count }}"
